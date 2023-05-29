@@ -1,5 +1,7 @@
 # any log file
 *.log
+*.log.*
+
 
 #remove __pycache__
 __pycache__
