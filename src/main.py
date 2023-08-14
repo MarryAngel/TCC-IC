@@ -16,7 +16,7 @@ import pdb #biblioteca para debugar
 
 # Carregar um arquivo .txt para um array numpy
 try:
-    txt = loader.load_txt("dados/boat.txt")
+    txt = loader.load_txt("dados/teste_4.txt")
 except Exception as e:
     raise RuntimeError('Error on load txt')
 
@@ -33,17 +33,20 @@ X, Y = p.parse_loader(txt)
 X_treino, X_teste, Y_treino, Y_teste = s.split(X, Y, percentage=0.5, random_state=1)
 
 # Criar uma instância de SupervisedOPF
-#opf = SupervisedOPF(distance="log_squared_euclidean", pre_computed_distance=None)
+opf = SupervisedOPF(distance="log_squared_euclidean", pre_computed_distance=None)
 q_opf = QSupervisedOPF(distance="log_squared_euclidean", pre_computed_distance=None)
 
 # Fits training data into the classifier
-#opf.fit(X_treino, Y_treino)
+opf.fit(X_treino, Y_treino)
 q_opf.fit(X_treino, Y_treino)
 
 # Predicts new data
-#preds = opf.predict(X_test)
+preds = opf.predict(X_teste)
+preds_q = q_opf.predict(X_teste)
 
 # Calculating accuracy
-#acc = g.opf_accuracy(Y_test, preds)
+acc = g.opf_accuracy(Y_teste, preds)
+acc_q = g.opf_accuracy(Y_teste, preds_q)
 
-#print(f"Accuracy: {acc}")
+print(f"Accuracy: {acc}")
+print(f"Accuracy Q: {acc_q}")
