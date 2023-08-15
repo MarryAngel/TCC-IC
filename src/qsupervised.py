@@ -61,13 +61,19 @@ class QSupervisedOPF(SupervisedOPF):
         n_nodes = self.subgraph.n_nodes
         
         for i in range(n_nodes):
-            n_current = self.subgraph.nodes[i]
+            #n_current = self.subgraph.nodes[i]
             for j in range(i+1,n_nodes,1):
-                n_next = self.subgraph.nodes[j]
-                weight = self.distance_fn(n_current.features, n_next.features)  #Distancia: log_squared_euclidean
+                #n_next = self.subgraph.nodes[j]
+                
+                if self.pre_computed_distance:
+                            weight = self.pre_distances[self.subgraph.nodes[i].idx][self.subgraph.nodes[j].idx]
+                else:
+                    weight = self.distance_fn(self.subgraph.nodes[i].features,self.subgraph.nodes[j].features,)
+                
+                #weight = self.distance_fn(n_current.features, n_next.features)  #Distancia: log_squared_euclidean
                 weights.append(weight)
             
-        n_edge = n = len(weights)  
+        n_edge = len(weights)  
         
         # Inicializando os vetores z, ZI e Id
             # z -> vetor com n matrizes de dimensão 2^n x 2^n que conterá a operação sigma Z 
@@ -80,7 +86,7 @@ class QSupervisedOPF(SupervisedOPF):
         
         # Criar os vetores z[1], z[2], z[3], ..., z[n_edge] e zI[1], zI[2], zI[3], ..., zI[n_edge]
         for j in range(0, n_edge):
-            #z[j] = qt.tensor(qt.identity(2**j),qt.tensor(qt.sigmaz() ,qt.identity(2**(n_edge-1-j)))).full() #.full convert Qobj to array
+            z[j] = qt.tensor(qt.identity(2**j),qt.tensor(qt.sigmaz() ,qt.identity(2**(n_edge-1-j)))).full() #.full convert Qobj to array
             zI[j] = (Id - z[j])/2
         
         # Montar hamiltoniano Hc        
@@ -95,33 +101,29 @@ class QSupervisedOPF(SupervisedOPF):
         #print("Hc: ", Hc)
 
         # Restrição 1: igualar número de arestas com número de vértices
-        P1 = 60
+        P1 = 90
         R1 = 0
         for k in range(0, n_edge):
             R1 += zI[k]
 
         R1 = P1*(R1 - n_nodes*Id)**2
 
-        # Restrição 2: forçar 2 arestas por nó
+        # Restrição 2: 2 arestas por nó
         P2 = 40
         R2 = 0
         for k in range(1, n_nodes+1):
-            aux = 0
-            for l in range(1, n_nodes+1):
+            somatorio = 0
+            for l in range(1, n_nodes+somatorio):
                 if k != l:
                     edge = self._vertex_edge(k,l,n_nodes)
-                    aux += zI[edge]
+                    somatorio += zI[edge]
                     #print(f"{k=}, {l=}, {J(k,l,n_nodes)=}")
-            aux -= 2*Id
-            R2 += P2 * (aux**2)
+            somatorio -= 2*Id
+            R2 += P2 * (somatorio**2)
         
         # Adicioanr as restrições na função Hc
         
         Hc += R1 + R2
-        
-        #print("Hc: ", Hc)
-        
-        min_energia = np.min(np.diag(Hc))
         
         # Resolver o problema QUBO com o algoritmo FALQON 
         dt=0.001
@@ -147,11 +149,15 @@ class QSupervisedOPF(SupervisedOPF):
         # Cálculo das probabilidades de ocorrer cada estado    
         probs = [abs(i)**2 for i in qi.Statevector(Psi)]
         
+        min_energia = np.min(np.diag(Hc))
+        idx_min_energia = np.unravel_index(np.argmin(np.diag(Hc)), np.diag(Hc).shape) 
+        graph_min_energia = format(idx_min_energia[0], f'0{n_edge}b')
+        
         # Selecionar o estado com maior probabilidade -> melhor solução encontrada
         max_probs = np.max(probs)
         idx = probs.index(max_probs)
-        if idx == 0:
-            idx = 51
+        #if idx == 0:
+        #    idx = 51
         graph = format(idx, f'0{n_edge}b')
 
         # Percorrer o grafo e selecionar os protótipos
