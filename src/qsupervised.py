@@ -3,6 +3,7 @@ from qiskit import *
 import qiskit.quantum_info as qi
 from qiskit.visualization import plot_histogram
 from qiskit.visualization import plot_state_city
+import qutip as qt
 
 from scipy.optimize import minimize
 import scipy.linalg as la
@@ -11,10 +12,9 @@ from opfython.models import SupervisedOPF
 from opfython.utils import logging
 import opfython.utils.constants as c
 
-import qutip as qt
+import matplotlib.pyplot as plt
 
 logger = logging.get_logger(__name__)
-
 
 class QSupervisedOPF(SupervisedOPF):
     """A SupervisedOPF which implements the supervised version with quantum mechanics from Qskit
@@ -66,7 +66,7 @@ class QSupervisedOPF(SupervisedOPF):
                 #n_next = self.subgraph.nodes[j]
                 
                 if self.pre_computed_distance:
-                            weight = self.pre_distances[self.subgraph.nodes[i].idx][self.subgraph.nodes[j].idx]
+                    weight = self.pre_distances[self.subgraph.nodes[i].idx][self.subgraph.nodes[j].idx]
                 else:
                     weight = self.distance_fn(self.subgraph.nodes[i].features,self.subgraph.nodes[j].features,)
                 
@@ -75,6 +75,11 @@ class QSupervisedOPF(SupervisedOPF):
             
         n_edge = len(weights)  
         
+        # Norma padrão
+        media = np.mean(weights)
+        desvio_padrao = np.std(weights)
+        weights = (weights-media)/(desvio_padrao)
+        
         # Inicializando os vetores z, ZI e Id
             # z -> vetor com n matrizes de dimensão 2^n x 2^n que conterá a operação sigma Z 
             # zI -> vetor com n matrizes de dimensão 2^n x 2^n que conterá a operação sigma zI = (1 - Z)/2
@@ -82,7 +87,7 @@ class QSupervisedOPF(SupervisedOPF):
         
         z = np.zeros((n_edge, 2**(n_edge), 2**(n_edge)), dtype=np.complex128)
         zI = np.zeros((n_edge, 2**(n_edge), 2**(n_edge)), dtype=np.complex128)
-        Id = np.identity(2**(n_edge), dtype=np.complex128)
+        Id = np.identity(2**(n_edge), dtype=np.complex64)
         
         # Criar os vetores z[1], z[2], z[3], ..., z[n_edge] e zI[1], zI[2], zI[3], ..., zI[n_edge]
         for j in range(0, n_edge):
@@ -94,14 +99,12 @@ class QSupervisedOPF(SupervisedOPF):
             if i == 0:
                 Hc = weights[i]*zI[i]
             else:
-                Hc = Hc + weights[i]*zI[i]        
+                Hc = Hc + weights[i]*zI[i]    
         
         # Criando as restrições do problema
 
-        #print("Hc: ", Hc)
-
         # Restrição 1: igualar número de arestas com número de vértices
-        P1 = 90
+        P1 = 9
         R1 = 0
         for k in range(0, n_edge):
             R1 += zI[k]
@@ -109,11 +112,11 @@ class QSupervisedOPF(SupervisedOPF):
         R1 = P1*(R1 - n_nodes*Id)**2
 
         # Restrição 2: 2 arestas por nó
-        P2 = 40
+        P2 = 7
         R2 = 0
         for k in range(1, n_nodes+1):
             somatorio = 0
-            for l in range(1, n_nodes+somatorio):
+            for l in range(1, n_nodes+1):
                 if k != l:
                     edge = self._vertex_edge(k,l,n_nodes)
                     somatorio += zI[edge]
@@ -125,9 +128,13 @@ class QSupervisedOPF(SupervisedOPF):
         
         Hc += R1 + R2
         
+        min_energia = np.min(np.diag(Hc))
+        idx_min_energia = np.unravel_index(np.argmin(np.diag(Hc)), np.diag(Hc).shape) 
+        graph_min_energia = format(idx_min_energia[0], f'0{n_edge}b')
+        
         # Resolver o problema QUBO com o algoritmo FALQON 
-        dt=0.001
-        Psi = np.ones((2**n_edge,1))/np.sqrt(2**n_edge)
+        dt=0.002
+        Psi = np.ones((2**n_edge,1))/np.sqrt(2**n_edge) #estado |+>
         lam=0.0
         Sx = self.Hx(lam, n_edge)
         beta = -1j*np.conjugate(Psi).T@(Sx@Hc-Hc@Sx)@Psi
@@ -135,12 +142,6 @@ class QSupervisedOPF(SupervisedOPF):
         for i in range(0,10000):
             Ux = la.expm(-1j*beta*Sx*dt)
             Uc = la.expm(-1j*Hc*dt)
-            if i==1000:
-                Sx=self.Hx(0.05,n_edge)
-            if i==2000:
-                Sx=self.Hx(0.1,n_edge)
-            if i==3000:
-                Sx=self.Hx(0.15,n_edge)
             Psi = Ux@Uc@Psi
             beta = -1j*np.conjugate(Psi).T@(Sx@Hc-Hc@Sx)@Psi
             aux = np.conjugate(Psi).T@Hc@Psi
@@ -149,17 +150,27 @@ class QSupervisedOPF(SupervisedOPF):
         # Cálculo das probabilidades de ocorrer cada estado    
         probs = [abs(i)**2 for i in qi.Statevector(Psi)]
         
-        min_energia = np.min(np.diag(Hc))
-        idx_min_energia = np.unravel_index(np.argmin(np.diag(Hc)), np.diag(Hc).shape) 
-        graph_min_energia = format(idx_min_energia[0], f'0{n_edge}b')
+        plt.plot(resp)
+        plt.xlabel('Tempo')
+        plt.ylabel('Energia')
+        
+        plt.savefig('EnergiaxTempo.png')
+        #plt.show()
+        plt.close()
+        
+        plt.bar(range(len(probs)), probs)
+        plt.xlabel('Estados')
+        plt.ylabel('Probabilidades')
+    
+        plt.savefig('Prob por estado.png')
+        #plt.show()
+        plt.close()
         
         # Selecionar o estado com maior probabilidade -> melhor solução encontrada
         max_probs = np.max(probs)
-        idx = probs.index(max_probs)
-        #if idx == 0:
-        #    idx = 51
-        graph = format(idx, f'0{n_edge}b')
-
+        idx_max_probs = probs.index(max_probs)
+        graph = format(idx_max_probs, f'0{n_edge}b')
+        
         # Percorrer o grafo e selecionar os protótipos
         prototypes = []
         labels = set()
@@ -181,7 +192,5 @@ class QSupervisedOPF(SupervisedOPF):
                         prototypes.append(edges[1])
                         # Appends current node identifier to the prototype's list
                         
-                        
-        logger.debug("Prototypes: %s.", prototypes)
+        logger.debug("Prototypes Q: %s.", prototypes)
         
-        # Verificar se os índices estão começando de forma correta na hora de utilizar as funções _edge_vertex e _vertex_edge
