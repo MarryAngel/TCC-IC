@@ -104,7 +104,8 @@ class QSupervisedOPF(SupervisedOPF):
         # Criando as restrições do problema
 
         # Restrição 1: igualar número de arestas com número de vértices
-        P1 = 9
+        P1 = 9 # Peso da restrição para dataset boat
+        #P1 = 15  # Peso da restrição para dataset Breast Tissue
         R1 = 0
         for k in range(0, n_edge):
             R1 += zI[k]
@@ -112,7 +113,8 @@ class QSupervisedOPF(SupervisedOPF):
         R1 = P1*(R1 - n_nodes*Id)**2
 
         # Restrição 2: 2 arestas por nó
-        P2 = 7
+        P2 = 7 # Peso da restrição para dataset boat
+        #P2 = 20 # Peso da restrição para dataset Breast Tissue
         R2 = 0
         for k in range(1, n_nodes+1):
             somatorio = 0
@@ -127,10 +129,15 @@ class QSupervisedOPF(SupervisedOPF):
         # Adicioanr as restrições na função Hc
         
         Hc += R1 + R2
+        #print(Hc)
+        #print(np.diag(Hc))
         
         min_energia = np.min(np.diag(Hc))
+        #print(min_energia3)
+        
         idx_min_energia = np.unravel_index(np.argmin(np.diag(Hc)), np.diag(Hc).shape) 
         graph_min_energia = format(idx_min_energia[0], f'0{n_edge}b')
+        #print(graph_min_energia)
         
         # Resolver o problema QUBO com o algoritmo FALQON 
         dt=0.002
@@ -154,7 +161,7 @@ class QSupervisedOPF(SupervisedOPF):
         plt.xlabel('Tempo')
         plt.ylabel('Energia')
         
-        plt.savefig('EnergiaxTempo.png')
+        plt.savefig('EnergiaxTempo(datasetnovo).png')
         #plt.show()
         plt.close()
         
@@ -162,7 +169,7 @@ class QSupervisedOPF(SupervisedOPF):
         plt.xlabel('Estados')
         plt.ylabel('Probabilidades')
     
-        plt.savefig('Prob por estado.png')
+        plt.savefig('Prob por estado(datasetnovo).png')
         #plt.show()
         plt.close()
         
@@ -170,6 +177,7 @@ class QSupervisedOPF(SupervisedOPF):
         max_probs = np.max(probs)
         idx_max_probs = probs.index(max_probs)
         graph = format(idx_max_probs, f'0{n_edge}b')
+        logger.debug("Graph: %s.", graph)
         
         # Percorrer o grafo e selecionar os protótipos
         prototypes = []

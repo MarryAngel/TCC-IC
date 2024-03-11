@@ -16,7 +16,7 @@ import pdb #biblioteca para debugar
 
 # Carregar um arquivo .txt para um array numpy
 try:
-    txt = loader.load_txt("dados/teste_5.txt")
+    txt = loader.load_txt("dados/teste_4_1.txt")
 except Exception as e:
     raise RuntimeError('Error on load txt')
 
