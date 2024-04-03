@@ -16,7 +16,7 @@ import time
 
 # Carregar um arquivo .txt para um array numpy
 try:
-    txt = loader.load_txt("dados/breast_reformatada.txt")
+    txt = loader.load_txt("dados/diabetes_formatado.txt")
 except Exception as e:
     raise RuntimeError('Error on load txt')
 
@@ -24,11 +24,19 @@ except Exception as e:
 if txt is None:
     raise RuntimeError('txt is None')
 
-# From third columns beyond, we should have the features
-X = txt[:, 2:]
 
-# Second column should be the label
-Y = txt[:, 1]
+print(txt.shape)
+
+# From third columns beyond, we should have the features
+#X = txt[:, 2:]
+# Da 1 a 13 coluna são os atributos
+X = txt[:, 1:8]
+# print(f"{X=}")
+
+# # Second column should be the label
+# Y = txt[:, 1]
+# 14 coluna é o rotulo
+Y = txt[:, 9]
 Y = Y.astype(int)
 
 # Escolher duas classes aleatórias com uma quantidade x de amostras cada uma
@@ -89,7 +97,7 @@ for j in range(100):
     selected_X = np.array(selected_X)
     selected_Y = np.array(selected_Y)
     
-    print(f"{selected_X=}")
+    #print(f"{selected_X=}")
     # print(f"{selected_Y=}")
 
     # Use the selected samples for training and testing
@@ -135,7 +143,7 @@ print(f"Acurácias Q-OPF: {accs_q_opf}")
 print(f"Média OPF: {media_opf}")
 print(f"Média Q-OPF: {media_q_opf}")
 
-resultados = open('resultado_breast100.txt', 'w+')
+resultados = open('resultado_heart100.txt', 'w+')
 
 arq = str(accs_opf)
 arq2 = str(accs_q_opf)

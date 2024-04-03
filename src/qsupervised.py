@@ -43,9 +43,9 @@ class QSupervisedOPF(SupervisedOPF):
 
         # cria os vetores x[1], x[2], x[3], ..., x[n]
         for k in range(0, n):
-            x[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmax() ,qt.identity(2**(n-1-k)))).data.toarray() #.full convert Qobj to array
-            z[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmaz() ,qt.identity(2**(n-1-k)))).data.toarray() #.full convert Qobj to array
-            y[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmay() ,qt.identity(2**(n-1-k)))).data.toarray() #.full convert Qobj to array
+            x[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmax() ,qt.identity(2**(n-1-k)))).data.to_array() #.full convert Qobj to array
+            z[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmaz() ,qt.identity(2**(n-1-k)))).data.to_array() #.full convert Qobj to array
+            y[k] = qt.tensor(qt.identity(2**k),qt.tensor(qt.sigmay() ,qt.identity(2**(n-1-k)))).data.to_array() #.full convert Qobj to array
 
         Hamx=np.zeros((2**n, 2**n), dtype=np.complex128)
         for i in range(0, n):
@@ -160,17 +160,13 @@ class QSupervisedOPF(SupervisedOPF):
         plt.plot(resp)
         plt.xlabel('Tempo')
         plt.ylabel('Energia')
-        
-        plt.savefig('EnergiaxTempo(datasetnovo).png')
-        #plt.show()
+        plt.savefig('EnergiaxTempo(Heart100).png')
         plt.close()
         
         plt.bar(range(len(probs)), probs)
         plt.xlabel('Estados')
         plt.ylabel('Probabilidades')
-    
-        plt.savefig('Prob por estado(datasetnovo).png')
-        #plt.show()
+        plt.savefig('Prob por estado(Heart100).png')
         plt.close()
         
         # Selecionar o estado com maior probabilidade -> melhor solução encontrada

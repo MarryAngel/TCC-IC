@@ -9,6 +9,7 @@ qiskit = "*"
 qutip = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.11"
