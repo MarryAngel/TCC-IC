@@ -160,13 +160,13 @@ class QSupervisedOPF(SupervisedOPF):
         plt.plot(resp)
         plt.xlabel('Tempo')
         plt.ylabel('Energia')
-        plt.savefig('EnergiaxTempo(Heart100).png')
+        plt.savefig('EnergiaxTempo(Ionosphere100).png')
         plt.close()
         
         plt.bar(range(len(probs)), probs)
         plt.xlabel('Estados')
         plt.ylabel('Probabilidades')
-        plt.savefig('Prob por estado(Heart100).png')
+        plt.savefig('Prob por estado(Ionosphere100).png')
         plt.close()
         
         # Selecionar o estado com maior probabilidade -> melhor solução encontrada
