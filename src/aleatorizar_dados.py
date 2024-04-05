@@ -16,7 +16,7 @@ import time
 
 # Carregar um arquivo .txt para um array numpy
 try:
-    txt = loader.load_txt("dados/ionosphere_formatado.txt")
+    txt = loader.load_txt("dados/heart_formatado.txt")
 except Exception as e:
     raise RuntimeError('Error on load txt')
 
@@ -30,13 +30,13 @@ if txt is None:
 # From third columns beyond, we should have the features
 #X = txt[:, 2:]
 # Da 1 a 13 coluna são os atributos
-X = txt[:, 1:34]
+X = txt[:, 3:13]
 # print(f"{X=}")
 
 # # Second column should be the label
 # Y = txt[:, 1]
 # 14 coluna é o rotulo
-Y = txt[:, 35]
+Y = txt[:, 14]
 Y = Y.astype(int)
 
 # Escolher duas classes aleatórias com uma quantidade x de amostras cada uma
@@ -50,7 +50,7 @@ unique_classes = np.unique(Y)
 accs_opf = np.array([])
 accs_q_opf = np.array([])
 
-for j in range(100):  
+for j in range(30):  
     
     # print("------------------------------")
     # print(f"{unique_classes=} {num_classes=}")
@@ -143,7 +143,7 @@ print(f"Acurácias Q-OPF: {accs_q_opf}")
 print(f"Média OPF: {media_opf}")
 print(f"Média Q-OPF: {media_q_opf}")
 
-resultados = open('resultado_ionosphere100.txt', 'w+')
+resultados = open('resultado_heart30.txt', 'w+')
 
 arq = str(accs_opf)
 arq2 = str(accs_q_opf)
